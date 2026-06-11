@@ -1,7 +1,7 @@
-// Copyright 2025 Saga Data AS. All rights reserved.
+// Copyright 2025 EpiLayer AS. All rights reserved.
 // Use of this source code is governed by the Mozilla Public License, v. 2.0.
 
-package sagadata
+package epilayer
 
 import (
 	"net/http"

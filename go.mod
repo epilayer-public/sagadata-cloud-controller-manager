@@ -1,9 +1,9 @@
-module github.com/sagadata-public/sagadata-cloud-controller-manager
+module github.com/epilayer-public/epilayer-cloud-controller-manager
 
 go 1.24.5
 
 require (
-	github.com/sagadata-public/sagadata-go v1.5.0
+	github.com/epilayer-public/epilayer-go v1.6.0
 	k8s.io/api v0.31.0
 	k8s.io/apimachinery v0.31.0
 	k8s.io/client-go v0.31.0

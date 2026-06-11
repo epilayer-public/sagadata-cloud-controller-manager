@@ -1,4 +1,4 @@
-package sagadata
+package epilayer
 
 import (
 	"context"
@@ -6,21 +6,21 @@ import (
 	"net/http"
 	"strings"
 
-	sagadata "github.com/sagadata-public/sagadata-go"
+	epilayer "github.com/epilayer-public/epilayer-go"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
 
-const providerIDPrefix = "sagadata://"
+const providerIDPrefix = "epilayer://"
 
 type instances struct {
-	client *sagadata.ClientWithResponses
+	client *epilayer.ClientWithResponses
 }
 
 // parseProviderID extracts the instance ID from a provider ID of the form
-// "sagadata://<instance-id>". It returns an error if the provider ID is empty
+// "epilayer://<instance-id>". It returns an error if the provider ID is empty
 // or does not have the expected prefix.
 func parseProviderID(providerID string) (string, error) {
 	if providerID == "" {
@@ -71,11 +71,11 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 
 // instanceByNodeName lists all instances and returns the one whose hostname
 // matches the given Kubernetes node name.
-func (i *instances) instanceByNodeName(ctx context.Context, name types.NodeName) (*sagadata.Instance, error) {
+func (i *instances) instanceByNodeName(ctx context.Context, name types.NodeName) (*epilayer.Instance, error) {
 	nodeName := string(name)
 	page := 1
 	for {
-		resp, err := i.client.ListInstancesPaginatedWithResponse(ctx, &sagadata.ListInstancesPaginatedParams{
+		resp, err := i.client.ListInstancesPaginatedWithResponse(ctx, &epilayer.ListInstancesPaginatedParams{
 			Page: &page,
 		})
 		if err != nil {
@@ -98,7 +98,7 @@ func (i *instances) instanceByNodeName(ctx context.Context, name types.NodeName)
 	return nil, cloudprovider.InstanceNotFound
 }
 
-func (i *instances) nodeAddresses(ctx context.Context, inst *sagadata.Instance) ([]v1.NodeAddress, error) {
+func (i *instances) nodeAddresses(ctx context.Context, inst *epilayer.Instance) ([]v1.NodeAddress, error) {
 	var addresses []v1.NodeAddress
 
 	addresses = append(addresses, v1.NodeAddress{
@@ -246,10 +246,10 @@ func (i *instances) InstanceShutdownByProviderID(ctx context.Context, providerID
 		return false, fmt.Errorf("unexpected response: %s", resp.Status())
 	}
 
-	return resp.JSON200.Instance.Status == sagadata.InstanceStatusStopped, nil
+	return resp.JSON200.Instance.Status == epilayer.InstanceStatusStopped, nil
 }
 
-func NewInstances(client *sagadata.ClientWithResponses) (cloudprovider.Instances, error) {
+func NewInstances(client *epilayer.ClientWithResponses) (cloudprovider.Instances, error) {
 	return &instances{client: client}, nil
 }
 
@@ -258,9 +258,9 @@ type instancesV2 struct {
 	region string
 }
 
-// getInstance resolves the sagadata instance from a node, preferring providerID
+// getInstance resolves the epilayer instance from a node, preferring providerID
 // over node name lookup.
-func (i *instancesV2) getInstance(ctx context.Context, node *v1.Node) (*sagadata.Instance, error) {
+func (i *instancesV2) getInstance(ctx context.Context, node *v1.Node) (*epilayer.Instance, error) {
 	if node.Spec.ProviderID != "" {
 		instanceID, err := parseProviderID(node.Spec.ProviderID)
 		if err != nil {
@@ -297,7 +297,7 @@ func (i *instancesV2) InstanceShutdown(ctx context.Context, node *v1.Node) (bool
 	if err != nil {
 		return false, err
 	}
-	return inst.Status == sagadata.InstanceStatusStopped, nil
+	return inst.Status == epilayer.InstanceStatusStopped, nil
 }
 
 func (i *instancesV2) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloudprovider.InstanceMetadata, error) {

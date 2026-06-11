@@ -1,21 +1,21 @@
-// Copyright 2025 Saga Data AS. All rights reserved.
+// Copyright 2025 EpiLayer AS. All rights reserved.
 // Use of this source code is governed by the Mozilla Public License, v. 2.0.
 
-package sagadata
+package epilayer
 
 import (
 	"fmt"
 	"io"
 	"os"
 
-	sagadata "github.com/sagadata-public/sagadata-go"
+	epilayer "github.com/epilayer-public/epilayer-go"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
 
 const (
-	// ProviderName is the name used when registering and when passing --cloud-provider=sagadata.
-	ProviderName = "sagadata"
+	// ProviderName is the name used when registering and when passing --cloud-provider=epilayer.
+	ProviderName = "epilayer"
 )
 
 // cloud implements cloudprovider.Interface
@@ -25,7 +25,7 @@ type cloud struct {
 	lbs         cloudprovider.LoadBalancer
 }
 
-// newCloud returns a new cloudprovider.Interface for Saga Data.
+// newCloud returns a new cloudprovider.Interface for EpiLayer.
 func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 	endpoint := os.Getenv("ENDPOINT")
 	if endpoint == "" {
@@ -47,12 +47,12 @@ func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 		return nil, fmt.Errorf("NETWORK environment variable not set")
 	}
 
-	client, err := sagadata.NewSagaDataClient(sagadata.ClientConfig{
+	client, err := epilayer.NewEpiLayerClient(epilayer.ClientConfig{
 		Endpoint:  endpoint,
 		TokenFile: tokenFile,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create sagadata client: %w", err)
+		return nil, fmt.Errorf("failed to create epilayer client: %w", err)
 	}
 
 	c := &cloud{}
@@ -67,7 +67,7 @@ func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 	}
 	c.lbs = &loadBalancers{
 		client:  client,
-		region:  sagadata.Region(region),
+		region:  epilayer.Region(region),
 		network: network,
 	}
 	return c, nil
@@ -81,9 +81,9 @@ func init() {
 
 // Initialize provides the cloud with a kubernetes client builder.
 func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
-	clientSet := clientBuilder.ClientOrDie("sagadata-cloud-controller-manager")
+	clientSet := clientBuilder.ClientOrDie("epilayer-cloud-controller-manager")
 	c.lbs.(*loadBalancers).kubeClient = clientSet
-	klog.Info("Sagadata cloud provider initialized")
+	klog.Info("EpiLayer cloud provider initialized")
 }
 
 // LoadBalancer returns a balancer interface.

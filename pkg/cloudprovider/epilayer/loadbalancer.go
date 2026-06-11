@@ -1,7 +1,7 @@
-// Copyright 2025 Saga Data AS. All rights reserved.
+// Copyright 2025 EpiLayer AS. All rights reserved.
 // Use of this source code is governed by the Mozilla Public License, v. 2.0.
 
-package sagadata
+package epilayer
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	sagadata "github.com/sagadata-public/sagadata-go"
+	epilayer "github.com/epilayer-public/epilayer-go"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,8 +22,8 @@ import (
 
 const (
 	// AnnotationLoadBalancerName is written back to the Service so that
-	// cluster admins can see which Saga Data load balancer backs it.
-	AnnotationLoadBalancerName = "sagadata.no/loadbalancer-name"
+	// cluster admins can see which EpiLayer load balancer backs it.
+	AnnotationLoadBalancerName = "epilayer.eu/loadbalancer-name"
 
 	// AnnotationLoadBalancerFloatingIp can be set on a Service to request that
 	// the named floating IP is used as the external IP of the load balancer.
@@ -32,9 +32,9 @@ const (
 )
 
 type loadBalancers struct {
-	client     *sagadata.ClientWithResponses
+	client     *epilayer.ClientWithResponses
 	kubeClient kubernetes.Interface
-	region     sagadata.Region
+	region     epilayer.Region
 	network    string
 }
 
@@ -49,10 +49,10 @@ func lbName(svc *v1.Service) string {
 	return "kube-svc-" + n.Text(36)
 }
 
-func (lb *loadBalancers) lbByName(ctx context.Context, name string) (*sagadata.Loadbalancer, error) {
+func (lb *loadBalancers) lbByName(ctx context.Context, name string) (*epilayer.Loadbalancer, error) {
 	page := 1
 	for {
-		resp, err := lb.client.ListLoadbalancersWithResponse(ctx, &sagadata.ListLoadbalancersParams{
+		resp, err := lb.client.ListLoadbalancersWithResponse(ctx, &epilayer.ListLoadbalancersParams{
 			Page: &page,
 		})
 		if err != nil {
@@ -74,7 +74,7 @@ func (lb *loadBalancers) lbByName(ctx context.Context, name string) (*sagadata.L
 	return nil, nil
 }
 
-func buildPorts(svc *v1.Service, nodes []*v1.Node) []sagadata.LoadbalancerPort {
+func buildPorts(svc *v1.Service, nodes []*v1.Node) []epilayer.LoadbalancerPort {
 	targets := []string{}
 	for _, n := range nodes {
 		for _, addr := range n.Status.Addresses {
@@ -85,9 +85,9 @@ func buildPorts(svc *v1.Service, nodes []*v1.Node) []sagadata.LoadbalancerPort {
 		}
 	}
 
-	var ports []sagadata.LoadbalancerPort
+	var ports []epilayer.LoadbalancerPort
 	for _, sp := range svc.Spec.Ports {
-		ports = append(ports, sagadata.LoadbalancerPort{
+		ports = append(ports, epilayer.LoadbalancerPort{
 			Port:       int(sp.Port),
 			TargetPort: int(sp.NodePort),
 			Targets:    targets,
@@ -133,10 +133,10 @@ func (lb *loadBalancers) EnsureLoadBalancer(ctx context.Context, clusterName str
 		return nil, err
 	}
 
-	var result *sagadata.Loadbalancer
+	var result *epilayer.Loadbalancer
 
 	if found == nil {
-		createBody := sagadata.CreateLoadbalancerJSONRequestBody{
+		createBody := epilayer.CreateLoadbalancerJSONRequestBody{
 			Name:    name,
 			Region:  lb.region,
 			Network: lb.network,
@@ -157,7 +157,7 @@ func (lb *loadBalancers) EnsureLoadBalancer(ctx context.Context, clusterName str
 		}
 		result = &resp.JSON201.Loadbalancer
 	} else {
-		updateBody := sagadata.UpdateLoadbalancerJSONRequestBody{
+		updateBody := epilayer.UpdateLoadbalancerJSONRequestBody{
 			Ports: &ports,
 		}
 		if bodyJSON, err := json.Marshal(updateBody); err == nil {
@@ -199,7 +199,7 @@ func (lb *loadBalancers) EnsureLoadBalancer(ctx context.Context, clusterName str
 		cur := &resp.JSON200.Loadbalancer
 		klog.Infof("load balancer %q status=%s externalIp=%v", name, cur.Status, cur.ExternalIp)
 
-		if cur.Status == sagadata.LoadbalancerStatusError {
+		if cur.Status == epilayer.LoadbalancerStatusError {
 			return nil, fmt.Errorf("load balancer %q entered error state", name)
 		}
 		if cur.ExternalIp != nil {
@@ -222,7 +222,7 @@ func (lb *loadBalancers) UpdateLoadBalancer(ctx context.Context, clusterName str
 	}
 
 	ports := buildPorts(svc, nodes)
-	updateBody := sagadata.UpdateLoadbalancerJSONRequestBody{
+	updateBody := epilayer.UpdateLoadbalancerJSONRequestBody{
 		Ports: &ports,
 	}
 	if bodyJSON, err := json.Marshal(updateBody); err == nil {

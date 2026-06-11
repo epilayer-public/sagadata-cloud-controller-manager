@@ -39,7 +39,7 @@
    builds the Docker image and pushes it to GHCR at:
 
    ```
-   ghcr.io/sagadata-public/sagadata-cloud-controller-manager:<version>
+   ghcr.io/epilayer-public/epilayer-cloud-controller-manager:<version>
    ```
 
    Check the **Actions** tab to confirm the workflow completes successfully.
@@ -47,5 +47,5 @@
 ## Pulling the image
 
 ```bash
-docker pull ghcr.io/sagadata-public/sagadata-cloud-controller-manager:0.2.0
+docker pull ghcr.io/epilayer-public/epilayer-cloud-controller-manager:0.2.0
 ```
