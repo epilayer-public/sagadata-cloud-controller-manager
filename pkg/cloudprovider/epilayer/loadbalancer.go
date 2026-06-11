@@ -28,7 +28,7 @@ const (
 	// AnnotationLoadBalancerFloatingIp can be set on a Service to request that
 	// the named floating IP is used as the external IP of the load balancer.
 	// If absent, an ephemeral IP is allocated (the default behaviour).
-	AnnotationLoadBalancerFloatingIp = "epilayer.io/floating-ip"
+	AnnotationLoadBalancerFloatingIp = "epilayer.eu/floating-ip"
 )
 
 type loadBalancers struct {
