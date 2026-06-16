@@ -1,4 +1,4 @@
-// Copyright 2025 Saga Data AS. All rights reserved.
+// Copyright 2025 EpiLayer AS. All rights reserved.
 // Use of this source code is governed by the Mozilla Public License, v. 2.0.
 
 package main
@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sagadata-public/sagadata-cloud-controller-manager/pkg/cloudprovider/sagadata"
+	"github.com/epilayer-public/epilayer-cloud-controller-manager/pkg/cloudprovider/epilayer"
 
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
@@ -28,8 +28,8 @@ func main() {
 		klog.Fatalf("unable to initialize command options: %v", err)
 	}
 
-	// Default to sagadata cloud provider so users can omit --cloud-provider=sagadata
-	ccmOptions.KubeCloudShared.CloudProvider.Name = sagadata.ProviderName
+	// Default to epilayer cloud provider so users can omit --cloud-provider=epilayer
+	ccmOptions.KubeCloudShared.CloudProvider.Name = epilayer.ProviderName
 
 	stopCh := make(chan struct{})
 	sig := make(chan os.Signal, 1)

@@ -1,4 +1,4 @@
-The code in this repository was created by Saga Data AS under the
+The code in this repository was created by EpiLayer AS under the
 Mozilla Public License Version 2.0.
 
 Mozilla Public License Version 2.0
