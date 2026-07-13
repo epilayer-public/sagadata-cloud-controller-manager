@@ -66,9 +66,10 @@ func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 		region:    region,
 	}
 	c.lbs = &loadBalancers{
-		client:  client,
-		region:  epilayer.Region(region),
-		network: network,
+		client:    client,
+		region:    epilayer.Region(region),
+		network:   network,
+		clusterID: os.Getenv("CLUSTER_ID"),
 	}
 	return c, nil
 }

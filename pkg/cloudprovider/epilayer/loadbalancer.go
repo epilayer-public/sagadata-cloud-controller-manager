@@ -43,6 +43,14 @@ type loadBalancers struct {
 	kubeClient kubernetes.Interface
 	region     epilayer.Region
 	network    string
+	clusterID  string
+}
+
+// lbDescription marks a load balancer as owned by this cluster's CCM so the
+// k8s-cluster operator can garbage-collect it when the cluster is deleted.
+// Format: ccm:<cluster-id>:<namespace>/<service-name>
+func (lb *loadBalancers) lbDescription(svc *v1.Service) string {
+	return fmt.Sprintf("ccm:%s:%s/%s", lb.clusterID, svc.Namespace, svc.Name)
 }
 
 func lbName(svc *v1.Service) string {
@@ -225,11 +233,13 @@ func (lb *loadBalancers) EnsureLoadBalancer(ctx context.Context, clusterName str
 	var result *epilayer.Loadbalancer
 
 	if found == nil {
+		description := lb.lbDescription(svc)
 		createBody := epilayer.CreateLoadbalancerJSONRequestBody{
-			Name:    name,
-			Region:  lb.region,
-			Network: lb.network,
-			Ports:   ports,
+			Name:        name,
+			Description: &description,
+			Region:      lb.region,
+			Network:     lb.network,
+			Ports:       ports,
 		}
 		floatingIpId, err := lb.ensureFloatingIP(ctx, svc)
 		if err != nil {
@@ -250,8 +260,12 @@ func (lb *loadBalancers) EnsureLoadBalancer(ctx context.Context, clusterName str
 		}
 		result = &resp.JSON201.Loadbalancer
 	} else {
+		// Setting the description on every update backfills the ownership marker
+		// on load balancers created before the CCM stamped it.
+		description := lb.lbDescription(svc)
 		updateBody := epilayer.UpdateLoadbalancerJSONRequestBody{
-			Ports: &ports,
+			Ports:       &ports,
+			Description: &description,
 		}
 		if bodyJSON, err := json.Marshal(updateBody); err == nil {
 			klog.Infof("updating load balancer %q (%s), request body: %s", name, found.Id, string(bodyJSON))
@@ -315,8 +329,10 @@ func (lb *loadBalancers) UpdateLoadBalancer(ctx context.Context, clusterName str
 	}
 
 	ports := buildPorts(svc, nodes)
+	description := lb.lbDescription(svc)
 	updateBody := epilayer.UpdateLoadbalancerJSONRequestBody{
-		Ports: &ports,
+		Ports:       &ports,
+		Description: &description,
 	}
 	if bodyJSON, err := json.Marshal(updateBody); err == nil {
 		klog.Infof("UpdateLoadBalancer %q (%s), request body: %s", name, found.Id, string(bodyJSON))
